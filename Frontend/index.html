@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ollama Chatbot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <section class="screen screen-select" id="screenSelect">
+          <div class="hero">
+            <p class="eyebrow">Wybierz rozmowe</p>
+            <h1>Najpierw wybierz osobe, potem start rozmowy.</h1>
+            <p class="sub">
+              Kliknij jedna z person. W kazdej chwili mozesz zmienic wybor.
+            </p>
+          </div>
+          <div class="persona-grid" id="personaGrid"></div>
+        </section>
+
+        <section class="screen screen-chat hidden" id="screenChat">
+          <div class="top">
+            <div>
+              <div><span class="bot-name" id="botName">Bot</span></div>
+              <div class="status" id="ollama">Łączenie...</div>
+            </div>
+            <div class="row right">
+              <button id="changePersonaBtn" type="button">Zmien persone</button>
+              <button id="themeToggle" class="theme-toggle" type="button">
+                Tryb ciemny
+              </button>
+              <button id="resetBtn" type="button">Reset rozmowy</button>
+            </div>
+          </div>
+
+          <div class="chat" id="chat"></div>
+
+          <div class="bar">
+            <input
+              id="inp"
+              placeholder="Napisz wiadomosc..."
+              autocomplete="off"
+            />
+            <button id="sendBtn" type="button">Wyslij</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
