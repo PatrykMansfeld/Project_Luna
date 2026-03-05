@@ -1,3 +1,12 @@
+# Description
+
+Luna is a asistant/buddy. The main objective of this project is to create working Ai buddy to help in everyday life
+
+# Features:
+- A Desktop aplication created in Electron/Tauri
+- Luna can see user screen and coment it or help during a task
+-  
+
 # Requiremensts
 
 - Python 3.10+
