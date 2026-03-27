@@ -41,8 +41,8 @@ function setTheme(theme) {
   localStorage.setItem(THEME_KEY, theme);
 }
 
+// Rysuje dymek wiadomości i przewija widok na dół.
 function addMsg(text, who) {
-  // Rysuje dymek wiadomości i przewija widok na dół.
   if (!chatEl) return;
   const d = document.createElement("div");
   d.className = "msg " + (who === "me" ? "me" : "bot");
@@ -51,8 +51,8 @@ function addMsg(text, who) {
   chatEl.scrollTop = chatEl.scrollHeight;
 }
 
+// Sprawdza zdrowie backendu i pokazuje status w nagłówku.
 async function ollamaStatus() {
-  // Sprawdza zdrowie backendu i pokazuje status w nagłówku.
   if (!ollamaEl) return;
   try {
     const r = await fetch(API + "/ollama");
@@ -77,7 +77,7 @@ function showChat() {
 }
 
 function greeting(name) {
-  return `Hej, tu ${name}. O czym chcesz pogadac?`;
+  return `Hello I am ${name}. How are you today?`;
 }
 
 function selectPersona(persona) {
@@ -130,7 +130,11 @@ async function loadPersonas() {
     const r = await fetch(API + "/personas");
     const data = await r.json();
     personas = data.personas || [];
-    renderPersonas(personas);
+    if (personas.length === 1) {
+      selectPersona(personas[0]);
+    } else {
+      renderPersonas(personas);
+    }
   } catch (e) {
     renderPersonas([]);
   }

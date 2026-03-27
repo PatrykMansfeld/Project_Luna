@@ -1,0 +1,373 @@
+:root {
+  --bg-1: #f7f7f7; /* kolor tła górna część gradientu */
+  --bg-2: #f7f7f7; /* kolor tła dolna część gradientu */
+  --card: #f7f7f7; /* tło głównej karty (okna czatu) */
+  --text: #151515; /* kolor tekstu */
+  --muted: rgba(
+    21,
+    21,
+    21,
+    0.72
+  ); /* kolor tekstu pomocniczego (np. status, podpisy) */
+  --border: rgba(39, 24, 115, 0.22); /* kolor obramowań */
+  --bubble-me: #93032e; /* kolor dymka wiadomości użytkownika */
+  --bubble-bot: rgba(39, 24, 115, 0.12); /* kolor dymka wiadomości asystenta */
+  --accent: #271873; /* kolor akcentów (np. linki, fokus) */
+  --shadow: rgba(21, 21, 21, 0.12); /* kolor cieni */
+}
+
+body[data-theme="dark"] {
+  --bg-1: #151515;
+  --bg-2: #151515;
+  --card: #151515;
+  --text: #f7f7f7;
+  --muted: rgba(247, 247, 247, 0.74);
+  --border: rgba(247, 247, 247, 0.2);
+  --bubble-me: #271873;
+  --bubble-bot: rgba(247, 247, 247, 0.1);
+  --accent: #93032e;
+  --shadow: rgba(0, 0, 0, 0.4);
+}
+
+/*RESET GLOBALNY*/
+* {
+  box-sizing: border-box;
+}
+
+/* ============================================================
+   BODY — tło gradientowe i ustawienia bazowe całej strony
+   ============================================================ */
+body {
+  font-family: "Space Grotesk", "Newsreader", serif;
+  background:
+    radial-gradient(
+      1200px 420px at 10% -10%,
+      rgba(147, 3, 46, 0.2),
+      transparent 60%
+    ),
+    radial-gradient(
+      900px 360px at 90% 10%,
+      rgba(39, 24, 115, 0.24),
+      transparent 60%
+    ),
+    linear-gradient(160deg, var(--bg-1), var(--bg-2));
+  color: var(--text);
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  transition:
+    background 200ms ease,
+    color 200ms ease;
+}
+
+/* ============================================================
+   WRAPPER — centruje zawartość i ustawia maksymalną szerokość
+   ============================================================ */
+.wrap {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 12px 16px 16px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   KARTA — główny kontener aplikacji (biała/ciemna ramka)
+   ============================================================ */
+.card {
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 12px 30px var(--shadow);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   EKRANY — ogólny kontener widoku (np. ekran wyboru persony)
+   ============================================================ */
+.screen {
+  padding: 18px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Klasa ukrywająca element */
+.hidden {
+  display: none;
+}
+
+/* Ekran czatu — layout bez paddingu, wypełnia całą kartę */
+.screen-chat {
+  padding: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ============================================================
+   SEKCJA HERO — nagłówek na ekranie wyboru persony
+   ============================================================ */
+.hero {
+  padding: 8px 0 16px;
+  max-width: 640px;
+}
+
+/* Mały tekst nad tytułem (np. "Wybierz asystenta") */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 8px;
+}
+
+/* Główny tytuł w sekcji hero */
+.hero h1 {
+  font-family: "Newsreader", serif;
+  font-size: 30px;
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+/* Podtytuł / opis w sekcji hero */
+.hero .sub {
+  color: var(--muted);
+  margin: 0;
+}
+
+/* ============================================================
+   SIATKA PERSON — układ kart wyboru asystenta
+   ============================================================ */
+.persona-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  padding-bottom: 12px;
+}
+
+/* Pojedyncza karta persony */
+.persona-card {
+  text-align: left;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  background: linear-gradient(150deg, rgba(147, 3, 46, 0.07), transparent);
+  box-shadow: 0 8px 20px rgba(21, 21, 21, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 160px;
+}
+
+/* Karta persony w trybie ciemnym */
+body[data-theme="dark"] .persona-card {
+  background: linear-gradient(150deg, rgba(247, 247, 247, 0.08), transparent);
+}
+
+/* Efekt hover na karcie persony */
+.persona-card:hover {
+  border-color: #93032e;
+  transform: translateY(-2px);
+}
+
+/* Nazwa persony na karcie */
+.persona-name {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Krótki opis persony na karcie */
+.persona-blurb {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Tekst akcji na dole karty (np. "Rozpocznij rozmowę →") */
+.persona-action {
+  font-weight: 600;
+  color: #271873;
+  margin-top: auto;
+}
+
+body[data-theme="dark"] .persona-action {
+  color: #f7f7f7;
+}
+
+/* Komunikat gdy lista jest pusta */
+.empty {
+  color: var(--muted);
+  padding: 10px 0;
+}
+
+/* ============================================================
+   PASEK GÓRNY — nagłówek okna czatu (nazwa bota, status)
+   ============================================================ */
+.top {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Tekst statusu (np. "połączono", "pisze...") */
+.status {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Nazwa bota w nagłówku */
+.bot-name {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* Pomocniczy flex-row */
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* Przesuwa elementy do prawej strony paska */
+.right {
+  margin-left: auto;
+}
+
+/* ============================================================
+   OBSZAR CZATU — lista wiadomości
+   ============================================================ */
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ============================================================
+   DYMKI WIADOMOŚCI — wspólne style
+   ============================================================ */
+.msg {
+  max-width: 75%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  box-shadow: 0 6px 16px rgba(21, 21, 21, 0.14);
+}
+
+/* Wiadomość użytkownika — wyrównana do prawej */
+.me {
+  align-self: flex-end;
+  background: var(--bubble-me);
+  color: #f7f7f7;
+}
+
+body[data-theme="dark"] .me {
+  color: #f7f7f7;
+}
+
+/* Wiadomość asystenta — wyrównana do lewej */
+.bot {
+  align-self: flex-start;
+  background: var(--bubble-bot);
+}
+
+/* ============================================================
+   PASEK DOLNY — pole tekstowe i przycisk wysyłania
+   ============================================================ */
+.bar {
+  border-top: 1px solid var(--border);
+  padding: 14px 18px 18px;
+  display: flex;
+  gap: 10px;
+}
+
+/* Pole tekstowe do wpisywania wiadomości */
+input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  font-size: 16px; /* rozmiar czcionki podczas pisania */
+  outline: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+/* Efekt fokusa na polu tekstowym */
+input:focus {
+  border-color: #271873;
+  box-shadow: 0 0 0 3px rgba(39, 24, 115, 0.24);
+}
+
+/* ============================================================
+   PRZYCISKI — styl bazowy
+   ============================================================ */
+button {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+/* Efekt hover na przyciskach (tryb jasny) */
+button:hover {
+  background: rgba(39, 24, 115, 0.1);
+}
+
+/* Efekt hover na przyciskach (tryb ciemny) */
+body[data-theme="dark"] button:hover {
+  background: rgba(247, 247, 247, 0.1);
+}
+
+/* Zablokowany przycisk */
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Przycisk przełączania motywu jasny/ciemny */
+.theme-toggle {
+  border-color: color-mix(in srgb, var(--border) 60%, transparent);
+}
+
+/* ============================================================
+   RESPONSYWNOŚĆ — dostosowanie do małych ekranów (< 720px)
+   ============================================================ */
+@media (max-width: 720px) {
+  .hero h1 {
+    font-size: 24px;
+  }
+
+  .top {
+    align-items: flex-start;
+  }
+
+  .right {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}

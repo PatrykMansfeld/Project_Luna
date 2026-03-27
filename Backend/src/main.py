@@ -32,8 +32,9 @@ for persona_path in sorted(personas_dir.glob("*.json")):
         continue
     persona_id = persona_path.stem
     name = data.get("name", persona_id)
-    backstory = data.get("backstory", "")
-    blurb = backstory.split(".")[0].strip() if backstory else ""
+    backstory = data.get("backstory", {})
+    backstory_origin = backstory.get("origin", "") if isinstance(backstory, dict) else backstory
+    blurb = backstory_origin.split(".")[0].strip() if backstory_origin else ""
     personas_map[persona_id] = data
     personas_list.append(PersonaInfo(id=persona_id, name=name, blurb=blurb))
 

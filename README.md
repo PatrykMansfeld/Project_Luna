@@ -1,20 +1,20 @@
 # Description
 
-Luna is a asistant/buddy. The main objective of this project is to create working Ai buddy to help in everyday life
-
-# Features:
-- A Desktop aplication created in Electron/Tauri
-- Luna can see user screen and coment it or help during a task
--  
+Zori is a chatbot designed to entertain users daily with wide range of topics and avaliable personas to choose from.
 
 # Requiremensts
 
+## Backend
 - Python 3.10+
 - Ollama running
 - A downloaded model:
   - llama3.1 or llama3.1:8b
 
-## Backend
+## Frontend
+- **Web:** Dowolna przeglądarka (Safari, Opera GX, Chrome, Firefox)
+- **Electron:** Node.js 16+
+
+## Backend Setup
 
 Create a venv and install dependencies:
 
@@ -31,9 +31,23 @@ Run:
 - mac/linux:
   `OLLAMA_MODEL=llama3.1 uvicorn src.main:app --host 127.0.0.1 --port 8000 --reload`
 
-## Frontend
+### Electron Frontend (Desktop App)
 
-run `Frontend/index.html` in a browser (ctrl + F5)
+Zainstaluj i uruchom aplikację desktopową:
+
+```bash
+cd Electron_Frontend
+npm install
+npm start
+```
+
+**Wymagania:** Node.js 16+
+
+**Struktura:**
+- `src/` - główny proces Electrona
+- `renderer/` - interfejs użytkownika (HTML/CSS/JS)
+
+**Uwaga:** Backend musi działać przed uruchomieniem frontendu!
 
 ## Personalization
 
