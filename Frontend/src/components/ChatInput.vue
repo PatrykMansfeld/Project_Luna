@@ -109,5 +109,3 @@ function submit() {
   background: var(--accent-hover);
 }
 </style>
-}
-</style>

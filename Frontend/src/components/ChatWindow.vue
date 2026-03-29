@@ -190,7 +190,6 @@ watch(() => props.loading, scrollToBottom)
     max-width: 90%;
   }
 }
-</style>
 
 @keyframes blink {
   0%, 80%, 100% { opacity: 0.4; transform: scale(1); }

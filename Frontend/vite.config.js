@@ -11,9 +11,9 @@ export default defineConfig({
     // bez problemów z CORS podczas developmentu
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000', // Adres backendu
+        target: 'http://127.0.0.1:3000', // Go API gateway
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''), // Usuwa prefix /api przed przekazaniem do backendu
+        rewrite: (path) => path.replace(/^\/api/, ''), // Usuwa prefix /api przed przekazaniem do Go API
       },
     },
   },
