@@ -1,28 +1,24 @@
-// Moduł API — funkcje komunikujące się z backendem FastAPI
-// Wszystkie requesty idą przez /api, które Vite proxy przekierowuje na port 8000
+const BASE = '/api'
 
-const BASE = '/api' // Prefix proxy — Vite przepisuje go na http://127.0.0.1:8000
+// Wspólny helper dla requestów do backendu, żeby nie powielać fetch i obsługi błędów.
+async function request(path, options) {
+  const response = await fetch(`${BASE}${path}`, options)
+  if (!response.ok) {
+    throw new Error(`Request failed: ${path}`)
+  }
 
-/**
- * Pobiera listę dostępnych person (np. Luna, Zori) z backendu.
- * Zwraca tablicę obiektów: { id, name, blurb }
- */
+  return response.json()
+}
+
+// Persony zasilają pasek wyboru i sekcję aktywnej persony w App.vue.
 export async function fetchPersonas() {
-  const res = await fetch(`${BASE}/personas`)
-  if (!res.ok) throw new Error('Nie udało się pobrać person')
-  const data = await res.json()
+  const data = await request('/personas')
   return data.personas
 }
 
-/**
- * Wysyła wiadomość użytkownika do backendu i zwraca odpowiedź bota.
- * @param {string} sessionId  — identyfikator sesji rozmowy
- * @param {string} userMessage — treść wiadomości użytkownika
- * @param {string} personaId  — id wybranej persony (np. "Luna")
- * @returns {{ session_id, bot_name, reply }} — odpowiedź z backendu
- */
-export async function sendMessage(sessionId, userMessage, personaId) {
-  const res = await fetch(`${BASE}/chat`, {
+// Główne wywołanie czatu; backend zwraca reply i ewentualnie nazwę aktywnego bota.
+export function sendMessage(sessionId, userMessage, personaId) {
+  return request('/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -31,18 +27,11 @@ export async function sendMessage(sessionId, userMessage, personaId) {
       persona_id: personaId,
     }),
   })
-  if (!res.ok) throw new Error('Błąd wysyłania wiadomości')
-  return res.json()
 }
 
-/**
- * Resetuje sesję rozmowy — czyści historię wiadomości na backendzie.
- * Wywoływane np. przy zmianie persony.
- */
-export async function resetSession(sessionId) {
-  const res = await fetch(`${BASE}/reset/${encodeURIComponent(sessionId)}`, {
+// Reset sesji czyści kontekst rozmowy przy zmianie persony.
+export function resetSession(sessionId) {
+  return request(`/reset/${encodeURIComponent(sessionId)}`, {
     method: 'POST',
   })
-  if (!res.ok) throw new Error('Błąd resetowania sesji')
-  return res.json()
 }

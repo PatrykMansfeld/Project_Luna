@@ -1,211 +1,389 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import PersonaSelector from './components/PersonaSelector.vue' // Pasek wyboru persony
-import ChatWindow from './components/ChatWindow.vue'           // Okno z wiadomościami
-import ChatInput from './components/ChatInput.vue'             // Pole do wpisywania wiadomości
-import { fetchPersonas, sendMessage, resetSession } from './api.js' // Funkcje API
+import { computed, onMounted, ref } from 'vue'
+import { fetchPersonas, resetSession, sendMessage } from './api.js'
+import ChatInput from './components/ChatInput.vue'
+import ChatWindow from './components/ChatWindow.vue'
+import PersonaSelector from './components/PersonaSelector.vue'
 
-// --- Stan reaktywny aplikacji ---
-const personas = ref([])          // Lista person pobranych z backendu
-const selectedPersona = ref(null) // ID aktualnie wybranej persony
-const messages = ref([])          // Tablica wiadomości: { role: 'user'|'assistant', content: '...' }
-const loading = ref(false)        // Flaga — czy czekamy na odpowiedź bota
-const botName = ref('Bot')        // Wyświetlana nazwa bota (np. "Luna")
-const error = ref('')             // Komunikat błędu (pusty = brak błędu)
+// Stałe współdzielone tylko przez główny kontener aplikacji.
+const THEME_KEY = 'theme'
+const DEFAULT_BOT_NAME = 'Bot'
 
-// Sprawdza localStorage, a jeśli brak — ustawienia systemowe
-const dark = ref(
-  localStorage.getItem('theme') === 'dark' ||
-  (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)
+// Główny stan widoku: aktywna persona, historia rozmowy, status requestu i motyw.
+const personas = ref([])
+const selectedPersona = ref(null)
+const messages = ref([])
+const loading = ref(false)
+const botName = ref(DEFAULT_BOT_NAME)
+const error = ref('')
+const dark = ref(getInitialTheme())
+const sessionId = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+const activePersona = computed(
+  () => personas.value.find((persona) => persona.id === selectedPersona.value) ?? null,
 )
 
-// Dodaje/usuwa klasę "dark" z <html> i zapisuje wybór w localStorage
-function applyTheme() {
-  document.documentElement.classList.toggle('dark', dark.value)
-  localStorage.setItem('theme', dark.value ? 'dark' : 'light')
-}
-applyTheme() // Ustaw motyw od razu przy załadowaniu
+// Najpierw synchronizujemy motyw z dokumentem, potem pobieramy persony z API.
+setTheme(dark.value)
+onMounted(loadPersonas)
 
-// Przełącza motyw jasny ↔ ciemny
+// Kolejność źródeł motywu: localStorage, a na końcu preferencja systemowa.
+function getInitialTheme() {
+  const savedTheme = localStorage.getItem(THEME_KEY)
+  if (savedTheme) {
+    return savedTheme === 'dark'
+  }
+
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+}
+
+// Jedno miejsce do przełączania motywu i zapisu ustawienia użytkownika.
+function setTheme(value) {
+  dark.value = value
+  document.documentElement.classList.toggle('dark', value)
+  localStorage.setItem(THEME_KEY, value ? 'dark' : 'light')
+}
+
 function toggleDark() {
-  dark.value = !dark.value
-  applyTheme()
+  setTheme(!dark.value)
 }
 
-// --- Sesja ---
-// Unikalny identyfikator sesji — generowany raz przy załadowaniu strony
-const sessionId = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+// Aktualizuje zaznaczenie i nazwę aktywnego bota widoczną w UI.
+function syncSelectedPersona(id) {
+  selectedPersona.value = id
+  botName.value = personas.value.find((persona) => persona.id === id)?.name ?? DEFAULT_BOT_NAME
+}
 
-// --- Inicjalizacja — pobierz persony z backendu po zamontowaniu komponentu ---
-onMounted(async () => {
+// Inicjalizacja aplikacji: pobranie person i wybór pierwszej dostępnej.
+async function loadPersonas() {
   try {
     personas.value = await fetchPersonas()
-    if (personas.value.length) {
-      selectedPersona.value = personas.value[0].id  // Domyślnie wybierz pierwszą personę
-      botName.value = personas.value[0].name
+    if (personas.value[0]) {
+      syncSelectedPersona(personas.value[0].id)
     }
-  } catch (e) {
-    error.value = 'Nie udało się połączyć z serwerem.'
-  }
-})
-
-// Zmiana persony — czyści historię czatu i resetuje sesję na backendzie
-async function selectPersona(id) {
-  if (id === selectedPersona.value) return // Już wybrana — nic nie rób
-  selectedPersona.value = id
-  const p = personas.value.find((x) => x.id === id)
-  botName.value = p?.name ?? 'Bot'
-  messages.value = [] // Czyści widoczne wiadomości
-  try {
-    await resetSession(sessionId) // Czyści historię na backendzie
   } catch {
-    // ignore — jeśli reset się nie uda, nic złego się nie stanie
+    error.value = 'Nie udało się połączyć z serwerem.'
   }
 }
 
-// Wysyłanie wiadomości — dodaje do czatu, wysyła do backendu, dodaje odpowiedź
+// Zmiana persony czyści lokalny czat i resetuje kontekst po stronie backendu.
+async function selectPersona(id) {
+  if (id === selectedPersona.value) {
+    return
+  }
+
+  syncSelectedPersona(id)
+  messages.value = []
+
+  try {
+    await resetSession(sessionId)
+  } catch {
+    // Ignore session reset failures and let the next message recreate context.
+  }
+}
+
+// Wiadomość trafia najpierw do UI, a potem do API, żeby interfejs reagował od razu.
 async function handleSend(text) {
-  messages.value.push({ role: 'user', content: text }) // Dodaj wiadomość usera do czatu
-  loading.value = true  // Pokaż animację "pisze..."
-  error.value = ''      // Wyczyść poprzedni błąd
+  if (!selectedPersona.value) {
+    return
+  }
+
+  messages.value.push({ role: 'user', content: text })
+  loading.value = true
+  error.value = ''
 
   try {
     const data = await sendMessage(sessionId, text, selectedPersona.value)
-    botName.value = data.bot_name
-    messages.value.push({ role: 'assistant', content: data.reply }) // Dodaj odpowiedź bota
+    botName.value = data.bot_name || botName.value
+    messages.value.push({ role: 'assistant', content: data.reply })
   } catch {
     error.value = 'Błąd — sprawdź czy backend i Ollama działają.'
   } finally {
-    loading.value = false // Wyłącz animację ładowania
+    loading.value = false
   }
 }
 </script>
 
 <template>
-  <!-- Główny kontener aplikacji — flex column na pełną wysokość ekranu -->
   <div class="app-shell">
-
-    <!-- HEADER — logo, tytuł i przycisk zmiany motywu -->
+    <!-- Górny pasek z brandingiem aplikacji i przełącznikiem motywu. -->
     <header class="app-header">
-      <div class="header-left"></div> <!-- Pusty div dla wyrównania flexem (3 kolumny) -->
-      <div class="header-center">
-        <span class="app-logo">🌙</span>
-        <h1 class="app-title">Project Luna</h1>
+      <div class="brand-block">
+        <div class="brand-mark">L</div>
+        <div class="brand-copy">
+          <p class="brand-kicker">Moonlit conversational studio</p>
+          <h1 class="app-title">Project Luna</h1>
+        </div>
       </div>
-      <div class="header-right">
-        <!-- Przycisk przełączania dark/light mode -->
-        <button class="theme-toggle" @click="toggleDark" :title="dark ? 'Tryb jasny' : 'Tryb ciemny'">
+
+      <button
+        class="theme-toggle"
+        :aria-label="dark ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'"
+        :title="dark ? 'Tryb jasny' : 'Tryb ciemny'"
+        @click="toggleDark"
+      >
           <svg v-if="dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
           </svg>
           <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
           </svg>
-        </button>
-      </div>
+      </button>
     </header>
 
-    <!-- PASEK PERSON — przyciski do wyboru osobowości bota -->
-    <PersonaSelector
-      :personas="personas"
-      :selected="selectedPersona"
-      @select="selectPersona"
-    />
+    <!-- Sekcja aktywnej persony i lista chipów do szybkiego przełączania. -->
+    <section class="persona-stage">
+      <div class="persona-copy">
+        <p class="section-label">Aktywna persona</p>
+        <div class="persona-heading">
+          <h2 class="persona-name">{{ activePersona?.name || 'Łączenie z biblioteką person' }}</h2>
+          <span class="status-pill">
+            <span class="status-dot"></span>
+            {{ activePersona ? 'Gotowa do rozmowy' : 'Ładowanie' }}
+          </span>
+        </div>
+        <p class="persona-blurb">
+          {{ activePersona?.blurb || 'Wybierz styl rozmowy i rozpocznij konwersację w kilku kliknięciach.' }}
+        </p>
+      </div>
 
-    <!-- OKNO CZATU — lista wiadomości + animacja "pisze..." -->
+      <PersonaSelector
+        :personas="personas"
+        :selected="selectedPersona"
+        @select="selectPersona"
+      />
+    </section>
+
+    <!-- Główne okno rozmowy renderuje historię wiadomości i stan "pisania". -->
     <ChatWindow
       :messages="messages"
       :loading="loading"
       :bot-name="botName"
     />
 
-    <!-- KOMUNIKAT BŁĘDU — widoczny tylko gdy error nie jest pusty -->
+    <!-- Komunikat błędu trzymamy blisko inputa, żeby był widoczny przy ponownej próbie. -->
     <div v-if="error" class="app-error">{{ error }}</div>
 
-    <!-- POLE WEJŚCIOWE — formularz z inputem i przyciskiem wyślij -->
-    <ChatInput :disabled="loading" @send="handleSend" />
+    <!-- Pole jest blokowane podczas requestu albo zanim wybierze się persona. -->
+    <ChatInput :disabled="loading || !selectedPersona" @send="handleSend" />
   </div>
 </template>
 
 <style scoped>
+/* Główna karta aplikacji na tle strony. */
 .app-shell {
+  position: relative;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
-  max-width: 50rem;
+  min-height: 100dvh;
+  max-width: min(58rem, calc(100vw - 1rem));
   margin: 0 auto;
-  background: var(--bg);
-  transition: background 0.25s ease;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--shell-border);
+  box-shadow: var(--shadow-lg);
+  backdrop-filter: blur(24px);
+  transition: background 0.25s ease, border-color 0.25s ease;
+  isolation: isolate;
 }
 
-@media (min-width: 50rem) {
+.app-shell::before {
+  content: '';
+  position: absolute;
+  top: -5rem;
+  right: -4rem;
+  width: 16rem;
+  height: 16rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-b) 0%, transparent 72%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.app-shell > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Na desktopie karta ma oddech od krawędzi okna i większe zaokrąglenie. */
+@media (min-width: 56rem) {
   .app-shell {
-    border-left: 1px solid var(--border);
-    border-right: 1px solid var(--border);
+    min-height: calc(100dvh - 2.5rem);
+    margin: 1.25rem auto;
+    border-radius: 1.75rem;
   }
 }
 
+/* Header odpowiada wyłącznie za branding i akcję zmiany motywu. */
 .app-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 1rem;
+  gap: 1rem;
+  padding: 1.15rem 1.25rem 1rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
-  transition: background 0.25s ease;
+  background: linear-gradient(180deg, var(--surface-strong), transparent);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
-.header-left,
-.header-right {
-  width: 2.5rem;
-  flex-shrink: 0;
-}
-
-.header-center {
+.brand-block {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  justify-content: center;
+  gap: 0.9rem;
 }
 
-.app-logo {
-  font-size: 1.2rem;
-  line-height: 1;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #f8d9a4 0%, #8ab9ff 100%);
+  color: #162033;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 12px 28px rgba(30, 52, 86, 0.18);
+}
+
+.brand-copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.brand-kicker {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-soft);
 }
 
 .app-title {
-  font-size: 1rem;
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: clamp(1.35rem, 2vw, 1.8rem);
+  font-weight: 600;
   color: var(--text-h);
-  letter-spacing: -0.3px;
+  letter-spacing: -0.04em;
+  line-height: 1;
 }
 
 .theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background: transparent;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid var(--shell-border);
+  border-radius: 0.9rem;
+  background: var(--surface-strong);
   color: var(--text);
   cursor: pointer;
-  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+
 .theme-toggle:hover {
   background: var(--accent-bg);
   border-color: var(--accent-border);
   color: var(--accent);
+  transform: translateY(-1px);
 }
 
-.app-error {
-  padding: 0.5rem 1rem;
-  margin: 0 1rem;
+/* Ta sekcja łączy opis aktywnej persony i pasek wyboru. */
+.persona-stage {
+  display: grid;
+  gap: 0.95rem;
+  padding: 1rem 1.25rem 1.15rem;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent);
+}
+
+.persona-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.persona-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.persona-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-h);
+  letter-spacing: -0.03em;
+}
+
+.persona-blurb {
+  max-width: 38rem;
+  font-size: 0.95rem;
+  color: var(--text-soft);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.42rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent-border);
+  background: var(--accent-bg);
+  color: var(--accent);
   font-size: 0.8rem;
-  color: #ef4444;
+  font-weight: 700;
+}
+
+.status-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 0.25rem var(--accent-bg);
+}
+
+/* Jedno miejsce na komunikaty błędu z backendu lub problemów z połączeniem. */
+.app-error {
+  margin: 0 1.25rem 0.75rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: 1rem;
   background: rgba(239, 68, 68, 0.08);
-  border-radius: 0.5rem;
-  text-align: center;
+  color: #ef4444;
+  font-size: 0.85rem;
+  text-align: left;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Na telefonach redukujemy marginesy, ale nie zmieniamy układu sekcji. */
+@media (max-width: 640px) {
+  .app-shell {
+    max-width: 100vw;
+    border-left: none;
+    border-right: none;
+  }
+
+  .app-header,
+  .persona-stage {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .brand-mark {
+    width: 2.7rem;
+    height: 2.7rem;
+  }
 }
 </style>

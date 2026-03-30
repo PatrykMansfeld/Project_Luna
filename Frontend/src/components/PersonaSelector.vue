@@ -1,17 +1,15 @@
 <script setup>
-// Props przyjmowane od rodzica (App.vue)
+// Pasek wyboru persony tylko renderuje opcje i emituje kliknięcie do App.vue.
 defineProps({
-  personas: { type: Array, required: true },  // Lista person: [{ id, name, blurb }]
-  selected: { type: String, default: null },  // ID aktualnie wybranej persony
+  personas: { type: Array, required: true },
+  selected: { type: String, default: null },
 })
-// Event emitowany do rodzica po kliknięciu persony
 const emit = defineEmits(['select'])
 </script>
 
 <template>
-  <!-- Kontener z przyciskami person, scrollowalny horyzontalnie -->
+  <!-- Pozioma lista chipów pozwala łatwo dodać kolejne persony bez zmiany layoutu. -->
   <div class="persona-bar">
-    <!-- Pojedynczy przycisk persony (chip) -->
     <button
       v-for="p in personas"
       :key="p.id"
@@ -20,40 +18,48 @@ const emit = defineEmits(['select'])
       @click="emit('select', p.id)"
       :title="p.blurb"
     >
-      <span class="chip-avatar">{{ p.name[0] }}</span> <!-- Awatar — pierwsza litera imienia -->
-      <span class="chip-name">{{ p.name }}</span>       <!-- Pełne imię persony -->
+      <span class="chip-avatar">{{ p.name.charAt(0) }}</span>
+      <span class="chip-name">{{ p.name }}</span>
     </button>
   </div>
 </template>
 
 <style scoped>
+/* Kontener przewijany poziomo, gdy liczba person przekracza szerokość sekcji. */
 .persona-bar {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.6rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--bg-secondary);
+  gap: 0.65rem;
   overflow-x: auto;
-  transition: background 0.25s ease;
+  padding-bottom: 0.15rem;
+  scrollbar-width: none;
 }
 
+.persona-bar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Każdy chip to osobny przycisk z awatarem i nazwą persony. */
 .persona-chip {
   display: flex;
   align-items: center;
-  gap: 0.45rem;
-  padding: 0.35rem 0.85rem 0.35rem 0.35rem;
+  gap: 0.6rem;
+  min-height: 3.1rem;
+  padding: 0.5rem 1rem 0.5rem 0.45rem;
   border: 1px solid var(--border);
   border-radius: 999px;
-  background: transparent;
+  background: var(--surface-strong);
   color: var(--text);
   cursor: pointer;
   font: inherit;
-  font-size: 0.82rem;
+  font-size: 0.88rem;
+  font-weight: 600;
   white-space: nowrap;
-  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .persona-chip:hover {
+  transform: translateY(-1px);
   border-color: var(--accent-border);
   background: var(--accent-bg);
   color: var(--text-h);
@@ -61,28 +67,33 @@ const emit = defineEmits(['select'])
 
 .persona-chip.active {
   border-color: var(--accent);
-  background: var(--accent-bg);
-  color: var(--accent);
+  background: linear-gradient(135deg, var(--accent-bg), transparent 85%), var(--surface-strong);
+  color: var(--text-h);
   font-weight: 600;
 }
 
+/* Awatar korzysta z pierwszej litery nazwy, więc nie wymaga osobnych assetów. */
 .chip-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.55rem;
-  height: 1.55rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: #fff;
   font-weight: 700;
-  font-size: 0.7rem;
+  font-size: 0.78rem;
   flex-shrink: 0;
-  transition: background 0.2s;
+  transition: transform 0.2s ease;
+}
+
+.chip-name {
+  letter-spacing: -0.02em;
 }
 
 .persona-chip.active .chip-avatar {
-  background: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-bg);
+  box-shadow: 0 0 0 0.3rem var(--accent-bg);
+  transform: scale(1.02);
 }
 </style>

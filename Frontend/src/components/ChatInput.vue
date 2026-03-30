@@ -1,29 +1,30 @@
 <script setup>
 import { ref } from 'vue'
 
-// Props od rodzica — blokuje input gdy bot generuje odpowiedź
+// Ten komponent zarządza tylko tekstem inputa i emituje gotową wiadomość do App.vue.
 defineProps({
   disabled: { type: Boolean, default: false },
 })
-// Event emitowany do rodzica z treścią wiadomości
 const emit = defineEmits(['send'])
 
-// Treść wpisana w input (reaktywna, powiązana przez v-model)
+// Lokalny stan pola wpisywania nie musi być podnoszony do rodzica.
 const text = ref('')
 
-// Obsługa wysłania — walidacja, emit eventu, czyszczenie pola
+// Trim blokuje puste wiadomości ze spacjami i utrzymuje prostą walidację przy formularzu.
 function submit() {
-  const msg = text.value.trim()
-  if (!msg) return        // Nie wysyłaj pustych wiadomości
-  emit('send', msg)       // Przekaż tekst do App.vue
-  text.value = ''         // Wyczyść pole po wysłaniu
+  const message = text.value.trim()
+  if (!message) {
+    return
+  }
+
+  emit('send', message)
+  text.value = ''
 }
 </script>
 
 <template>
-  <!-- Formularz — submit.prevent zapobiega przeładowaniu strony -->
+  <!-- Dolny pasek czatu: pole tekstowe i przycisk wysyłki. -->
   <form class="chat-input" @submit.prevent="submit">
-    <!-- Wrapper łączący input i przycisk w jedną „kapsułę" -->
     <div class="input-wrap">
       <input
         v-model="text"
@@ -33,9 +34,8 @@ function submit() {
         autocomplete="off"
         maxlength="8000"
       />
-      <!-- Przycisk wyślij — nieaktywny gdy pole puste lub trwa ładowanie -->
+      <!-- Przycisk używa tego samego stanu disabled co input. -->
       <button type="submit" :disabled="disabled || !text.trim()" title="Wyślij">
-        <!-- Ikona „wyślij" (SVG papierowy samolot) -->
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/>
           <polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -46,37 +46,43 @@ function submit() {
 </template>
 
 <style scoped>
+/* Sekcja dokowana do dołu aplikacji, odpowiedzialna za wpisywanie wiadomości. */
 .chat-input {
-  padding: 0.6rem 1rem 0.75rem;
+  padding: 0.9rem 1.25rem 1.25rem;
   border-top: 1px solid var(--border);
-  background: var(--bg-secondary);
-  transition: background 0.25s ease;
+  background: linear-gradient(180deg, transparent, var(--bg-secondary) 28%);
+  transition: background 0.25s ease, border-color 0.25s ease;
 }
 
+/* Wrapper buduje wspólny kształt dla inputa i przycisku wysyłki. */
 .input-wrap {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.6rem;
   align-items: center;
   background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  padding: 0.25rem 0.3rem 0.25rem 1rem;
-  transition: border-color 0.2s, background 0.25s, box-shadow 0.2s;
+  border: 1px solid var(--shell-border);
+  border-radius: 1.4rem;
+  padding: 0.35rem 0.4rem 0.35rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s ease, border-color 0.2s ease, background 0.25s ease, box-shadow 0.2s ease;
 }
 
+/* Focus jest na wrapperze, bo to on wizualnie pełni rolę pola formularza. */
 .input-wrap:focus-within {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-bg);
+  box-shadow: 0 0 0 4px var(--accent-bg), var(--shadow-sm);
+  transform: translateY(-1px);
 }
 
 .input-wrap input {
   flex: 1;
-  padding: 0.5rem 0;
+  min-height: 2.85rem;
+  padding: 0.55rem 0;
   border: none;
   background: transparent;
   color: var(--text-h);
   font: inherit;
-  font-size: 0.92rem;
+  font-size: 0.95rem;
   outline: none;
 }
 
@@ -85,18 +91,20 @@ function submit() {
   opacity: 0.5;
 }
 
+/* To główny przycisk akcji w całym czacie, dlatego ma mocniejszy akcent. */
 .input-wrap button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2.85rem;
+  height: 2.85rem;
   border: none;
-  border-radius: 50%;
-  background: var(--accent);
+  border-radius: 1rem;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: #fff;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
+  box-shadow: 0 16px 32px rgba(20, 39, 67, 0.18);
+  transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
   flex-shrink: 0;
 }
 
@@ -106,6 +114,15 @@ function submit() {
 }
 
 .input-wrap button:not(:disabled):hover {
-  background: var(--accent-hover);
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+}
+
+/* Na małych ekranach redukujemy tylko padding zewnętrzny formularza. */
+@media (max-width: 600px) {
+  .chat-input {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 }
 </style>
