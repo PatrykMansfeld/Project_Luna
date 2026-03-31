@@ -1,5 +1,4 @@
 :root {
-  /* Jasny motyw: centralne tokeny kolorów, cieni i fontów używane w całym froncie. */
   --text: #435267;
   --text-h: #182234;
   --text-soft: #6f7f93;
@@ -27,7 +26,6 @@
   --display: 'Sitka Display', 'Georgia', serif;
 }
 
-/* Ciemny motyw nadpisuje tylko zmienne, więc komponenty nie potrzebują osobnych klas. */
 .dark {
   --text: #b9c8d8;
   --text-h: #f1f5fa;
@@ -54,7 +52,6 @@
   --glow-c: rgba(86, 170, 153, 0.12);
 }
 
-/* Globalna typografia i przejścia między motywami. */
 html {
   font: 15px/1.6 var(--sans);
   color: var(--text);
@@ -70,14 +67,12 @@ body,
   min-height: 100%;
 }
 
-/* Bazowy reset box modelu dla całej aplikacji. */
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
 
-/* Tło całej strony jest niezależne od karty aplikacji z App.vue. */
 body {
   margin: 0;
   background: var(--bg);
@@ -88,7 +83,6 @@ body {
   background-attachment: fixed;
 }
 
-/* Delikatna siatka w tle dodaje strukturę bez wpływu na layout komponentów. */
 body::before {
   content: '';
   position: fixed;
@@ -116,7 +110,6 @@ input {
   color: var(--text-h);
 }
 
-/* Globalny scrollbar dla przewijanych sekcji, np. czatu i listy person. */
 ::-webkit-scrollbar {
   width: 6px;
 }

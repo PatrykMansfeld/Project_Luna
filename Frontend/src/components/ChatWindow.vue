@@ -1,7 +1,6 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
 
-// Komponent dostaje cały stan czatu z App.vue; lokalnie pilnuje tylko auto-scrolla.
 const props = defineProps({
   messages: { type: Array, required: true },
   loading: { type: Boolean, default: false },
@@ -9,10 +8,8 @@ const props = defineProps({
 })
 
 const container = ref(null)
-// Awatar bota składamy z pierwszej litery, żeby nie duplikować logiki w template.
 const botInitial = computed(() => props.botName.charAt(0).toUpperCase() || 'B')
 
-// Po dopisaniu wiadomości albo zmianie loadingu przewijamy okno na dół.
 function scrollToBottom() {
   nextTick(() => {
     const element = container.value
@@ -26,7 +23,6 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 </script>
 
 <template>
-  <!-- Przewijalny obszar rozmowy: pusty stan, wiadomości i wskaźnik pisania. -->
   <div class="chat-window" ref="container">
     <div v-if="messages.length === 0 && !loading" class="chat-empty">
       <div class="empty-orb">{{ botInitial }}</div>
@@ -35,7 +31,6 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
       <p class="empty-hint">Wybierz personę powyżej i wyślij pierwszą wiadomość, żeby uruchomić konwersację.</p>
     </div>
 
-    <!-- Wspólny układ wiadomości; rola steruje pozycją i wariantem bąbelka. -->
     <div
       v-for="(msg, i) in messages"
       :key="i"
@@ -50,7 +45,6 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
       </div>
     </div>
 
-    <!-- Osobny blok, więc animację pisania można podmienić bez ruszania listy wiadomości. -->
     <div v-if="loading" class="msg-row assistant">
       <div class="msg-avatar">{{ botInitial }}</div>
       <div class="msg-bubble assistant">
@@ -75,7 +69,6 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
   transition: background 0.25s ease;
 }
 
-/* Środkowa, przewijalna część layoutu z historią rozmowy. */
 .chat-empty {
   margin: auto;
   text-align: center;
@@ -214,7 +207,6 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Mobilnie pozwalamy wiadomościom zająć trochę więcej szerokości. */
 @media (max-width: 600px) {
   .msg-row {
     max-width: 92%;

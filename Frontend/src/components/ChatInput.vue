@@ -1,16 +1,13 @@
 <script setup>
 import { ref } from 'vue'
 
-// Ten komponent zarządza tylko tekstem inputa i emituje gotową wiadomość do App.vue.
 defineProps({
   disabled: { type: Boolean, default: false },
 })
 const emit = defineEmits(['send'])
 
-// Lokalny stan pola wpisywania nie musi być podnoszony do rodzica.
 const text = ref('')
 
-// Trim blokuje puste wiadomości ze spacjami i utrzymuje prostą walidację przy formularzu.
 function submit() {
   const message = text.value.trim()
   if (!message) {
@@ -23,7 +20,6 @@ function submit() {
 </script>
 
 <template>
-  <!-- Dolny pasek czatu: pole tekstowe i przycisk wysyłki. -->
   <form class="chat-input" @submit.prevent="submit">
     <div class="input-wrap">
       <input
@@ -34,10 +30,10 @@ function submit() {
         autocomplete="off"
         maxlength="8000"
       />
-      <!-- Przycisk używa tego samego stanu disabled co input. -->
       <button type="submit" :disabled="disabled || !text.trim()" title="Wyślij">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/>
+          // The original line above is replaced with a polygon to create a filled paper plane icon.
           <polygon points="22 2 15 22 11 13 2 9 22 2"/>
         </svg>
       </button>
@@ -46,7 +42,6 @@ function submit() {
 </template>
 
 <style scoped>
-/* Sekcja dokowana do dołu aplikacji, odpowiedzialna za wpisywanie wiadomości. */
 .chat-input {
   padding: 0.9rem 1.25rem 1.25rem;
   border-top: 1px solid var(--border);
@@ -54,7 +49,6 @@ function submit() {
   transition: background 0.25s ease, border-color 0.25s ease;
 }
 
-/* Wrapper buduje wspólny kształt dla inputa i przycisku wysyłki. */
 .input-wrap {
   display: flex;
   gap: 0.6rem;
@@ -67,7 +61,6 @@ function submit() {
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.25s ease, box-shadow 0.2s ease;
 }
 
-/* Focus jest na wrapperze, bo to on wizualnie pełni rolę pola formularza. */
 .input-wrap:focus-within {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-bg), var(--shadow-sm);
@@ -91,7 +84,6 @@ function submit() {
   opacity: 0.5;
 }
 
-/* To główny przycisk akcji w całym czacie, dlatego ma mocniejszy akcent. */
 .input-wrap button {
   display: inline-flex;
   align-items: center;
@@ -118,7 +110,6 @@ function submit() {
   transform: translateY(-1px);
 }
 
-/* Na małych ekranach redukujemy tylko padding zewnętrzny formularza. */
 @media (max-width: 600px) {
   .chat-input {
     padding-left: 1rem;

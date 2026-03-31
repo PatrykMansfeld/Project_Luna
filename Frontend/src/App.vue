@@ -5,11 +5,9 @@ import ChatInput from './components/ChatInput.vue'
 import ChatWindow from './components/ChatWindow.vue'
 import PersonaSelector from './components/PersonaSelector.vue'
 
-// Stałe współdzielone tylko przez główny kontener aplikacji.
 const THEME_KEY = 'theme'
 const DEFAULT_BOT_NAME = 'Bot'
 
-// Główny stan widoku: aktywna persona, historia rozmowy, status requestu i motyw.
 const personas = ref([])
 const selectedPersona = ref(null)
 const messages = ref([])
@@ -22,11 +20,9 @@ const activePersona = computed(
   () => personas.value.find((persona) => persona.id === selectedPersona.value) ?? null,
 )
 
-// Najpierw synchronizujemy motyw z dokumentem, potem pobieramy persony z API.
 setTheme(dark.value)
 onMounted(loadPersonas)
 
-// Kolejność źródeł motywu: localStorage, a na końcu preferencja systemowa.
 function getInitialTheme() {
   const savedTheme = localStorage.getItem(THEME_KEY)
   if (savedTheme) {
@@ -36,7 +32,6 @@ function getInitialTheme() {
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
-// Jedno miejsce do przełączania motywu i zapisu ustawienia użytkownika.
 function setTheme(value) {
   dark.value = value
   document.documentElement.classList.toggle('dark', value)
@@ -47,13 +42,11 @@ function toggleDark() {
   setTheme(!dark.value)
 }
 
-// Aktualizuje zaznaczenie i nazwę aktywnego bota widoczną w UI.
 function syncSelectedPersona(id) {
   selectedPersona.value = id
   botName.value = personas.value.find((persona) => persona.id === id)?.name ?? DEFAULT_BOT_NAME
 }
 
-// Inicjalizacja aplikacji: pobranie person i wybór pierwszej dostępnej.
 async function loadPersonas() {
   try {
     personas.value = await fetchPersonas()
@@ -65,7 +58,6 @@ async function loadPersonas() {
   }
 }
 
-// Zmiana persony czyści lokalny czat i resetuje kontekst po stronie backendu.
 async function selectPersona(id) {
   if (id === selectedPersona.value) {
     return
@@ -81,7 +73,6 @@ async function selectPersona(id) {
   }
 }
 
-// Wiadomość trafia najpierw do UI, a potem do API, żeby interfejs reagował od razu.
 async function handleSend(text) {
   if (!selectedPersona.value) {
     return
@@ -105,7 +96,6 @@ async function handleSend(text) {
 
 <template>
   <div class="app-shell">
-    <!-- Górny pasek z brandingiem aplikacji i przełącznikiem motywu. -->
     <header class="app-header">
       <div class="brand-block">
         <div class="brand-mark">L</div>
@@ -130,7 +120,6 @@ async function handleSend(text) {
       </button>
     </header>
 
-    <!-- Sekcja aktywnej persony i lista chipów do szybkiego przełączania. -->
     <section class="persona-stage">
       <div class="persona-copy">
         <p class="section-label">Aktywna persona</p>
@@ -153,23 +142,19 @@ async function handleSend(text) {
       />
     </section>
 
-    <!-- Główne okno rozmowy renderuje historię wiadomości i stan "pisania". -->
     <ChatWindow
       :messages="messages"
       :loading="loading"
       :bot-name="botName"
     />
 
-    <!-- Komunikat błędu trzymamy blisko inputa, żeby był widoczny przy ponownej próbie. -->
     <div v-if="error" class="app-error">{{ error }}</div>
 
-    <!-- Pole jest blokowane podczas requestu albo zanim wybierze się persona. -->
     <ChatInput :disabled="loading || !selectedPersona" @send="handleSend" />
   </div>
 </template>
 
 <style scoped>
-/* Główna karta aplikacji na tle strony. */
 .app-shell {
   position: relative;
   display: flex;
@@ -204,7 +189,6 @@ async function handleSend(text) {
   z-index: 1;
 }
 
-/* Na desktopie karta ma oddech od krawędzi okna i większe zaokrąglenie. */
 @media (min-width: 56rem) {
   .app-shell {
     min-height: calc(100dvh - 2.5rem);
@@ -213,7 +197,6 @@ async function handleSend(text) {
   }
 }
 
-/* Header odpowiada wyłącznie za branding i akcję zmiany motywu. */
 .app-header {
   display: flex;
   align-items: center;
@@ -290,7 +273,6 @@ async function handleSend(text) {
   transform: translateY(-1px);
 }
 
-/* Ta sekcja łączy opis aktywnej persony i pasek wyboru. */
 .persona-stage {
   display: grid;
   gap: 0.95rem;
@@ -354,7 +336,6 @@ async function handleSend(text) {
   box-shadow: 0 0 0 0.25rem var(--accent-bg);
 }
 
-/* Jedno miejsce na komunikaty błędu z backendu lub problemów z połączeniem. */
 .app-error {
   margin: 0 1.25rem 0.75rem;
   padding: 0.8rem 1rem;
@@ -367,7 +348,6 @@ async function handleSend(text) {
   box-shadow: var(--shadow-sm);
 }
 
-/* Na telefonach redukujemy marginesy, ale nie zmieniamy układu sekcji. */
 @media (max-width: 640px) {
   .app-shell {
     max-width: 100vw;

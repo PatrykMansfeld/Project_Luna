@@ -1,5 +1,4 @@
 <script setup>
-// Pasek wyboru persony tylko renderuje opcje i emituje kliknięcie do App.vue.
 defineProps({
   personas: { type: Array, required: true },
   selected: { type: String, default: null },
@@ -8,7 +7,6 @@ const emit = defineEmits(['select'])
 </script>
 
 <template>
-  <!-- Pozioma lista chipów pozwala łatwo dodać kolejne persony bez zmiany layoutu. -->
   <div class="persona-bar">
     <button
       v-for="p in personas"
@@ -25,7 +23,6 @@ const emit = defineEmits(['select'])
 </template>
 
 <style scoped>
-/* Kontener przewijany poziomo, gdy liczba person przekracza szerokość sekcji. */
 .persona-bar {
   display: flex;
   gap: 0.65rem;
@@ -38,7 +35,6 @@ const emit = defineEmits(['select'])
   display: none;
 }
 
-/* Każdy chip to osobny przycisk z awatarem i nazwą persony. */
 .persona-chip {
   display: flex;
   align-items: center;
@@ -72,7 +68,6 @@ const emit = defineEmits(['select'])
   font-weight: 600;
 }
 
-/* Awatar korzysta z pierwszej litery nazwy, więc nie wymaga osobnych assetów. */
 .chip-avatar {
   display: inline-flex;
   align-items: center;
