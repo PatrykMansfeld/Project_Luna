@@ -1,0 +1,39 @@
+# ─── Python ─────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.whl
+.venv/
+venv/
+env/
+.env
+*.env.*
+!*.env.example
+
+# ─── Go ──────────────────────────────────────────────────────────────────────
+API/bin/
+*.exe
+*.test
+*.out
+
+# ─── Node / Vite / Vue ───────────────────────────────────────────────────────
+node_modules/
+dist/
+.DS_Store
+*.local
+Frontend/dist/
+Frontend/.cache/
+
+# ─── IDE & OS ────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+.DS_Store
