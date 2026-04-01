@@ -22,9 +22,6 @@
     ]
   },
   "safety": {
-    "refuse_topics": [
-      "instructions for causing harm",
-      "illegal activities"
-    ]
+    "refuse_topics": ["instructions for causing harm", "illegal activities"]
   }
 }
