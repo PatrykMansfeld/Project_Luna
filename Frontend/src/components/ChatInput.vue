@@ -55,7 +55,7 @@ function submit() {
   align-items: center;
   background: var(--input-bg);
   border: 1px solid var(--shell-border);
-  border-radius: 1.4rem;
+  border-radius: 0.4rem;
   padding: 0.35rem 0.4rem 0.35rem 1.1rem;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.25s ease, box-shadow 0.2s ease;
@@ -91,11 +91,11 @@ function submit() {
   width: 2.85rem;
   height: 2.85rem;
   border: none;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-  color: #fff;
+  border-radius: 0.25rem;
+  background: var(--brand-gradient);
+  color: var(--brand-text);
   cursor: pointer;
-  box-shadow: 0 16px 32px rgba(20, 39, 67, 0.18);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
   transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
   flex-shrink: 0;
 }

@@ -75,7 +75,7 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
   width: min(100%, 28rem);
   padding: 2.25rem 1.5rem;
   border: 1px solid var(--shell-border);
-  border-radius: 1.75rem;
+  border-radius: 0.4rem;
   background: var(--surface-strong);
   box-shadow: var(--shadow-sm);
 }
@@ -87,13 +87,15 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
   width: 4.25rem;
   height: 4.25rem;
   margin-bottom: 1rem;
-  border-radius: 1.4rem;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-  color: #fff;
+  border-radius: 0.35rem;
+  background: var(--brand-gradient);
+  color: var(--brand-text);
   font-family: var(--display);
   font-size: 1.7rem;
   font-weight: 700;
-  box-shadow: 0 18px 40px rgba(18, 41, 74, 0.18);
+  letter-spacing: 0.05em;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--shell-border);
 }
 
 .empty-label {
@@ -106,9 +108,10 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 }
 
 .empty-title {
-  font-size: 1.35rem;
+  font-family: var(--display);
+  font-size: 1.25rem;
   color: var(--text-h);
-  letter-spacing: -0.03em;
+  letter-spacing: 0.06em;
   margin-bottom: 0.45rem;
 }
 
@@ -137,10 +140,11 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 .msg-avatar {
   width: 2rem;
   height: 2rem;
-  border-radius: 50%;
+  border-radius: 0.25rem;
   border: 1px solid var(--shell-border);
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-  color: #fff;
+  background: var(--brand-gradient);
+  color: var(--brand-text);
+  font-family: var(--display);
   font-weight: 700;
   font-size: 0.75rem;
   display: flex;
@@ -154,8 +158,8 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 .msg-bubble {
   padding: 0.8rem 1rem;
   border: 1px solid transparent;
-  border-radius: 1.3rem;
-  line-height: 1.6;
+  border-radius: 0.4rem;
+  line-height: 1.7;
   word-break: break-word;
   box-shadow: var(--shadow-sm);
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
@@ -164,7 +168,7 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 .msg-bubble.user {
   background: var(--bubble-user);
   color: var(--bubble-user-text);
-  border-bottom-right-radius: 0.4rem;
+  border-bottom-right-radius: 0.1rem;
 }
 
 .msg-bubble.assistant {
@@ -172,7 +176,7 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
   color: var(--bubble-bot-text);
   border-color: var(--border);
   backdrop-filter: blur(14px);
-  border-bottom-left-radius: 0.4rem;
+  border-bottom-left-radius: 0.1rem;
 }
 
 .msg-text {

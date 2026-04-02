@@ -193,7 +193,7 @@ async function handleSend(text) {
   .app-shell {
     min-height: calc(100dvh - 2.5rem);
     margin: 1.25rem auto;
-    border-radius: 1.75rem;
+    border-radius: 0.5rem;
   }
 }
 
@@ -220,13 +220,15 @@ async function handleSend(text) {
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #f8d9a4 0%, #8ab9ff 100%);
-  color: #162033;
+  border-radius: 0.3rem;
+  background: var(--brand-gradient);
+  color: var(--brand-text);
   font-family: var(--display);
   font-size: 1.35rem;
   font-weight: 700;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 12px 28px rgba(30, 52, 86, 0.18);
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 1px 0 rgba(255, 215, 150, 0.20), var(--brand-shadow);
+  border: 1px solid var(--shell-border);
 }
 
 .brand-copy {
@@ -244,11 +246,12 @@ async function handleSend(text) {
 
 .app-title {
   font-family: var(--display);
-  font-size: clamp(1.35rem, 2vw, 1.8rem);
-  font-weight: 600;
+  font-size: clamp(1.25rem, 2vw, 1.65rem);
+  font-weight: 700;
   color: var(--text-h);
-  letter-spacing: -0.04em;
+  letter-spacing: 0.10em;
   line-height: 1;
+  text-transform: uppercase;
 }
 
 .theme-toggle {
@@ -258,7 +261,7 @@ async function handleSend(text) {
   width: 2.75rem;
   height: 2.75rem;
   border: 1px solid var(--shell-border);
-  border-radius: 0.9rem;
+  border-radius: 0.3rem;
   background: var(--surface-strong);
   color: var(--text);
   cursor: pointer;
@@ -303,10 +306,11 @@ async function handleSend(text) {
 }
 
 .persona-name {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-family: var(--display);
+  font-size: 1.15rem;
+  font-weight: 600;
   color: var(--text-h);
-  letter-spacing: -0.03em;
+  letter-spacing: 0.06em;
 }
 
 .persona-blurb {
@@ -319,13 +323,15 @@ async function handleSend(text) {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.42rem 0.8rem;
-  border-radius: 999px;
+  padding: 0.38rem 0.8rem;
+  border-radius: 0.2rem;
   border: 1px solid var(--accent-border);
   background: var(--accent-bg);
   color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .status-dot {
@@ -364,6 +370,7 @@ async function handleSend(text) {
   .brand-mark {
     width: 2.7rem;
     height: 2.7rem;
+    border-radius: 0.25rem;
   }
 }
 </style>

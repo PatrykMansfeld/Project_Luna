@@ -42,13 +42,14 @@ const emit = defineEmits(['select'])
   min-height: 3.1rem;
   padding: 0.5rem 1rem 0.5rem 0.45rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: 0.3rem;
   background: var(--surface-strong);
   color: var(--text);
   cursor: pointer;
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
+  letter-spacing: 0.04em;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
   transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
@@ -74,9 +75,10 @@ const emit = defineEmits(['select'])
   justify-content: center;
   width: 2rem;
   height: 2rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
-  color: #fff;
+  border-radius: 0.2rem;
+  background: var(--brand-gradient);
+  color: var(--brand-text);
+  font-family: var(--display);
   font-weight: 700;
   font-size: 0.78rem;
   flex-shrink: 0;
@@ -88,7 +90,7 @@ const emit = defineEmits(['select'])
 }
 
 .persona-chip.active .chip-avatar {
-  box-shadow: 0 0 0 0.3rem var(--accent-bg);
+  box-shadow: 0 0 0 0.25rem var(--accent-bg);
   transform: scale(1.02);
 }
 </style>
