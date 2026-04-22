@@ -16,7 +16,7 @@ def _get_int(name: str, default: int) -> int:
 
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma3:27b")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.1")
 MAX_TURNS_MEMORY = _get_int("MAX_TURNS_MEMORY", 18)
 
 # Nazwy kompatybilne wstecz, jeśli są używane w innych miejscach

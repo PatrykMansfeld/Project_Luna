@@ -44,33 +44,30 @@ function submit() {
 <style scoped>
 .chat-input {
   padding: 0.9rem 1.25rem 1.25rem;
-  border-top: 1px solid var(--border);
-  background: linear-gradient(180deg, transparent, var(--bg-secondary) 28%);
-  transition: background 0.25s ease, border-color 0.25s ease;
+  border-top: 2px solid var(--border);
+  background: var(--surface-2);
 }
 
 .input-wrap {
   display: flex;
   gap: 0.6rem;
   align-items: center;
-  background: var(--input-bg);
-  border: 1px solid var(--shell-border);
-  border-radius: 0.4rem;
-  padding: 0.35rem 0.4rem 0.35rem 1.1rem;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  padding: 0.3rem 0.35rem 0.3rem 1rem;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.25s ease, box-shadow 0.2s ease;
+  transition: transform 0.12s, box-shadow 0.12s;
 }
 
 .input-wrap:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-bg), var(--shadow-sm);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+  transform: translate(-1px, -1px);
 }
 
 .input-wrap input {
   flex: 1;
-  min-height: 2.85rem;
-  padding: 0.55rem 0;
+  min-height: 2.7rem;
+  padding: 0.5rem 0;
   border: none;
   background: transparent;
   color: var(--text-h);
@@ -80,23 +77,21 @@ function submit() {
 }
 
 .input-wrap input::placeholder {
-  color: var(--text);
-  opacity: 0.5;
+  color: var(--text-soft);
 }
 
 .input-wrap button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.85rem;
-  height: 2.85rem;
-  border: none;
-  border-radius: 0.25rem;
-  background: var(--brand-gradient);
-  color: var(--brand-text);
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 2px solid var(--border);
+  background: var(--accent);
+  color: #000;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.12s, box-shadow 0.12s, opacity 0.15s;
   flex-shrink: 0;
 }
 
@@ -106,8 +101,13 @@ function submit() {
 }
 
 .input-wrap button:not(:disabled):hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--border);
+}
+
+.input-wrap button:not(:disabled):active {
+  transform: translate(0, 0);
+  box-shadow: none;
 }
 
 @media (max-width: 600px) {

@@ -156,44 +156,20 @@ async function handleSend(text) {
 
 <style scoped>
 .app-shell {
-  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  max-width: min(58rem, calc(100vw - 1rem));
+  max-width: min(58rem, calc(100vw - 2rem));
   margin: 0 auto;
-  overflow: hidden;
   background: var(--surface);
-  border: 1px solid var(--shell-border);
+  border: 2px solid var(--border);
   box-shadow: var(--shadow-lg);
-  backdrop-filter: blur(24px);
-  transition: background 0.25s ease, border-color 0.25s ease;
-  isolation: isolate;
-}
-
-.app-shell::before {
-  content: '';
-  position: absolute;
-  top: -5rem;
-  right: -4rem;
-  width: 16rem;
-  height: 16rem;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--glow-b) 0%, transparent 72%);
-  filter: blur(8px);
-  pointer-events: none;
-}
-
-.app-shell > * {
-  position: relative;
-  z-index: 1;
 }
 
 @media (min-width: 56rem) {
   .app-shell {
     min-height: calc(100dvh - 2.5rem);
     margin: 1.25rem auto;
-    border-radius: 0.5rem;
   }
 }
 
@@ -202,10 +178,9 @@ async function handleSend(text) {
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 1.15rem 1.25rem 1rem;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--surface-strong), transparent);
-  transition: background 0.25s ease, border-color 0.25s ease;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid var(--border);
+  background: var(--header-bg);
 }
 
 .brand-block {
@@ -220,36 +195,35 @@ async function handleSend(text) {
   justify-content: center;
   width: 3rem;
   height: 3rem;
-  border-radius: 0.3rem;
-  background: var(--brand-gradient);
-  color: var(--brand-text);
+  background: #000;
+  color: var(--accent);
   font-family: var(--display);
   font-size: 1.35rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  box-shadow: inset 0 1px 0 rgba(255, 215, 150, 0.20), var(--brand-shadow);
-  border: 1px solid var(--shell-border);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  border: 2px solid #000;
+  box-shadow: var(--shadow-sm);
 }
 
 .brand-copy {
   display: grid;
-  gap: 0.2rem;
+  gap: 0.1rem;
 }
 
 .brand-kicker {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--text-soft);
+  color: var(--header-text-soft);
 }
 
 .app-title {
   font-family: var(--display);
-  font-size: clamp(1.25rem, 2vw, 1.65rem);
-  font-weight: 700;
-  color: var(--text-h);
-  letter-spacing: 0.10em;
+  font-size: clamp(1.2rem, 2vw, 1.5rem);
+  font-weight: 800;
+  color: var(--header-text);
+  letter-spacing: -0.03em;
   line-height: 1;
   text-transform: uppercase;
 }
@@ -260,39 +234,41 @@ async function handleSend(text) {
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  border: 1px solid var(--shell-border);
-  border-radius: 0.3rem;
-  background: var(--surface-strong);
-  color: var(--text);
+  border: 2px solid #000;
+  background: #000;
+  color: var(--accent);
   cursor: pointer;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  transition: transform 0.12s, box-shadow 0.12s;
 }
 
 .theme-toggle:hover {
-  background: var(--accent-bg);
-  border-color: var(--accent-border);
-  color: var(--accent);
-  transform: translateY(-1px);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.theme-toggle:active {
+  transform: translate(0, 0);
+  box-shadow: none;
 }
 
 .persona-stage {
   display: grid;
-  gap: 0.95rem;
+  gap: 0.85rem;
   padding: 1rem 1.25rem 1.15rem;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), transparent);
+  border-bottom: 2px solid var(--border);
+  background: var(--surface-2);
 }
 
 .persona-copy {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
 }
 
 .section-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-soft);
 }
@@ -307,50 +283,48 @@ async function handleSend(text) {
 
 .persona-name {
   font-family: var(--display);
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.1rem;
+  font-weight: 800;
   color: var(--text-h);
-  letter-spacing: 0.06em;
+  letter-spacing: -0.02em;
 }
 
 .persona-blurb {
   max-width: 38rem;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--text-soft);
 }
 
 .status-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.38rem 0.8rem;
-  border-radius: 0.2rem;
-  border: 1px solid var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--accent);
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  gap: 0.4rem;
+  padding: 0.3rem 0.7rem;
+  border: 2px solid var(--border);
+  background: var(--accent);
+  color: #000;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  box-shadow: var(--shadow-sm);
 }
 
 .status-dot {
-  width: 0.5rem;
-  height: 0.5rem;
+  width: 0.45rem;
+  height: 0.45rem;
   border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 0.25rem var(--accent-bg);
+  background: #000;
 }
 
 .app-error {
   margin: 0 1.25rem 0.75rem;
-  padding: 0.8rem 1rem;
-  border: 1px solid rgba(239, 68, 68, 0.18);
-  border-radius: 1rem;
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
+  padding: 0.75rem 1rem;
+  border: 2px solid #cc0000;
+  background: rgba(204, 0, 0, 0.07);
+  color: #cc0000;
   font-size: 0.85rem;
-  text-align: left;
+  font-weight: 600;
   box-shadow: var(--shadow-sm);
 }
 
@@ -368,9 +342,8 @@ async function handleSend(text) {
   }
 
   .brand-mark {
-    width: 2.7rem;
-    height: 2.7rem;
-    border-radius: 0.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
   }
 }
 </style>

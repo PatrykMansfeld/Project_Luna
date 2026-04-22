@@ -25,7 +25,7 @@ const emit = defineEmits(['select'])
 <style scoped>
 .persona-bar {
   display: flex;
-  gap: 0.65rem;
+  gap: 0.6rem;
   overflow-x: auto;
   padding-bottom: 0.15rem;
   scrollbar-width: none;
@@ -38,59 +38,52 @@ const emit = defineEmits(['select'])
 .persona-chip {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  min-height: 3.1rem;
-  padding: 0.5rem 1rem 0.5rem 0.45rem;
-  border: 1px solid var(--border);
-  border-radius: 0.3rem;
-  background: var(--surface-strong);
+  gap: 0.55rem;
+  min-height: 2.85rem;
+  padding: 0.45rem 0.9rem 0.45rem 0.4rem;
+  border: 2px solid var(--border);
+  background: var(--surface);
   color: var(--text);
   cursor: pointer;
   font: inherit;
   font-size: 0.88rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+  transition: transform 0.12s, box-shadow 0.12s;
 }
 
 .persona-chip:hover {
-  transform: translateY(-1px);
-  border-color: var(--accent-border);
-  background: var(--accent-bg);
-  color: var(--text-h);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--border);
+}
+
+.persona-chip:active {
+  transform: translate(0, 0);
+  box-shadow: none;
 }
 
 .persona-chip.active {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, var(--accent-bg), transparent 85%), var(--surface-strong);
-  color: var(--text-h);
-  font-weight: 600;
+  background: var(--accent);
+  color: #000;
 }
 
 .chip-avatar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0.2rem;
-  background: var(--brand-gradient);
-  color: var(--brand-text);
+  width: 1.9rem;
+  height: 1.9rem;
+  background: #000;
+  color: var(--accent);
   font-family: var(--display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.78rem;
   flex-shrink: 0;
-  transition: transform 0.2s ease;
 }
 
 .chip-name {
-  letter-spacing: -0.02em;
-}
-
-.persona-chip.active .chip-avatar {
-  box-shadow: 0 0 0 0.25rem var(--accent-bg);
-  transform: scale(1.02);
+  letter-spacing: -0.01em;
 }
 </style>
