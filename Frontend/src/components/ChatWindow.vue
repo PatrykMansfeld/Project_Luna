@@ -1,5 +1,8 @@
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
+import { marked } from 'marked'
+
+marked.setOptions({ breaks: true, gfm: true })
 
 const props = defineProps({
   messages: { type: Array, required: true },
@@ -9,17 +12,21 @@ const props = defineProps({
 
 const container = ref(null)
 const botInitial = computed(() => props.botName.charAt(0).toUpperCase() || 'B')
+const lastContent = computed(() => props.messages[props.messages.length - 1]?.content ?? '')
+
+function renderMarkdown(content) {
+  return marked.parse(content)
+}
 
 function scrollToBottom() {
   nextTick(() => {
-    const element = container.value
-    if (element) {
-      element.scrollTop = element.scrollHeight
+    if (container.value) {
+      container.value.scrollTop = container.value.scrollHeight
     }
   })
 }
 
-watch([() => props.messages.length, () => props.loading], scrollToBottom)
+watch([() => props.messages.length, () => props.loading, lastContent], scrollToBottom)
 </script>
 
 <template>
@@ -41,16 +48,15 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
         {{ botInitial }}
       </div>
       <div class="msg-bubble" :class="msg.role">
-        <div class="msg-text">{{ msg.content }}</div>
-      </div>
-    </div>
-
-    <div v-if="loading" class="msg-row assistant">
-      <div class="msg-avatar">{{ botInitial }}</div>
-      <div class="msg-bubble assistant">
-        <div class="typing">
+        <div v-if="msg.role === 'assistant' && msg.streaming && !msg.content" class="typing">
           <span></span><span></span><span></span>
         </div>
+        <div
+          v-else-if="msg.role === 'assistant'"
+          class="msg-text md"
+          v-html="renderMarkdown(msg.content)"
+        ></div>
+        <div v-else class="msg-text">{{ msg.content }}</div>
       </div>
     </div>
   </div>
@@ -171,6 +177,45 @@ watch([() => props.messages.length, () => props.loading], scrollToBottom)
 .msg-text {
   font-size: 0.95rem;
   white-space: pre-wrap;
+}
+
+/* Markdown rendered content */
+.msg-text.md {
+  white-space: normal;
+}
+
+.msg-text.md :deep(p) { margin: 0 0 0.5em; }
+.msg-text.md :deep(p:last-child) { margin-bottom: 0; }
+.msg-text.md :deep(ul),
+.msg-text.md :deep(ol) { margin: 0.4em 0; padding-left: 1.4em; }
+.msg-text.md :deep(li) { margin-bottom: 0.2em; }
+.msg-text.md :deep(code) {
+  font-family: monospace;
+  font-size: 0.88em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  padding: 0.1em 0.35em;
+}
+.msg-text.md :deep(pre) {
+  margin: 0.6em 0;
+  padding: 0.75em 1em;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  overflow-x: auto;
+}
+.msg-text.md :deep(pre code) {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+.msg-text.md :deep(strong) { font-weight: 700; }
+.msg-text.md :deep(em) { font-style: italic; }
+.msg-text.md :deep(blockquote) {
+  border-left: 3px solid var(--border);
+  margin: 0.5em 0;
+  padding-left: 0.75em;
+  color: var(--text-soft);
 }
 
 .typing {

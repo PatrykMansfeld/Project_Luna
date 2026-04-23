@@ -78,3 +78,10 @@ func (sw *statusWriter) WriteHeader(code int) {
 	sw.status = code
 	sw.ResponseWriter.WriteHeader(code)
 }
+
+// Flush przekazuje wywołanie Flush do opakowanego ResponseWriter (wymagane dla SSE / streamingu).
+func (sw *statusWriter) Flush() {
+	if f, ok := sw.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}

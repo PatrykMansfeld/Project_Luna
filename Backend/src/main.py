@@ -1,9 +1,13 @@
+import asyncio
+import json
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from .config import OLLAMA_BASE_URL, OLLAMA_MODEL, MAX_TURNS_MEMORY, CORS_ORIGINS
 from .database import init_db
@@ -14,7 +18,7 @@ from .models import (
 )
 from .client import OllamaClient
 from .personality import load_persona, build_system_prompt
-from .memory import MemoryStore
+from .memory import MemoryStore, UserFactsStore
 
 
 @asynccontextmanager
@@ -53,7 +57,43 @@ for persona_path in sorted(personas_dir.glob("*.json")):
 default_persona_id: Optional[str] = personas_list[0].id if personas_list else None
 
 memory = MemoryStore(max_turns=MAX_TURNS_MEMORY)
+user_facts = UserFactsStore()
 ollama = OllamaClient(base_url=OLLAMA_BASE_URL, model=OLLAMA_MODEL)
+
+
+async def _generate_title(session_id: str, user_message: str, reply: str) -> None:
+    try:
+        prompt = (
+            "Generate a short conversation title (3-6 words) based on this exchange.\n"
+            f"User: {user_message[:200]}\nAssistant: {reply[:200]}\n"
+            "Reply with ONLY the title, no quotes, no explanation."
+        )
+        title = await ollama.chat([ChatMessage(role="user", content=prompt)])
+        title = title.strip().strip("\"'")[:128]
+        if title:
+            await memory.set_title(session_id, title)
+    except Exception:
+        pass
+
+
+async def _extract_facts(user_message: str, reply: str) -> None:
+    try:
+        prompt = (
+            "Extract personal facts about the user from this exchange. "
+            "Reply ONLY with a JSON array like: [{\"key\": \"name\", \"value\": \"Anna\"}]\n"
+            "Only include clear, specific facts (name, age, city, job, hobbies, etc). "
+            "If nothing to extract, reply with: []\n\n"
+            f"User: {user_message[:300]}\nAssistant: {reply[:200]}"
+        )
+        result = await ollama.chat([ChatMessage(role="user", content=prompt)])
+        match = re.search(r"\[.*?\]", result, re.DOTALL)
+        if match:
+            facts = json.loads(match.group())
+            for fact in facts:
+                if isinstance(fact, dict) and "key" in fact and "value" in fact:
+                    await user_facts.upsert(str(fact["key"])[:128], str(fact["value"]))
+    except Exception:
+        pass
 
 
 @app.get("/health")
@@ -90,7 +130,7 @@ async def session_messages(session_id: str):
     )
 
 
-@app.post("/chat", response_model=ChatResponse)
+@app.post("/chat")
 async def chat(req: ChatRequest):
     persona_id = req.persona_id or await memory.get_persona(req.session_id) or default_persona_id
     if not persona_id or persona_id not in personas_map:
@@ -102,7 +142,11 @@ async def chat(req: ChatRequest):
 
     persona = personas_map[persona_id]
     bot_name = persona.get("name", "Bot")
+
     system_prompt = build_system_prompt(persona)
+    user_ctx = await user_facts.format_for_prompt()
+    if user_ctx:
+        system_prompt = system_prompt + "\n\n" + user_ctx
 
     history = await memory.get(req.session_id)
     if not history or history[0].role != "system":
@@ -112,16 +156,45 @@ async def chat(req: ChatRequest):
             persona_id=persona_id,
         )
 
-    await memory.append(req.session_id, ChatMessage(role="user", content=req.user_message), persona_id=persona_id)
+    await memory.append(
+        req.session_id,
+        ChatMessage(role="user", content=req.user_message),
+        persona_id=persona_id,
+    )
 
-    try:
-        reply = await ollama.chat(await memory.get(req.session_id))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Błąd rozmowy z Ollama: {str(e)}")
+    history = await memory.get(req.session_id)
+    user_msg_count = sum(1 for m in history if m.role == "user")
+    is_first_exchange = user_msg_count == 1
 
-    await memory.append(req.session_id, ChatMessage(role="assistant", content=reply), persona_id=persona_id)
+    async def generate():
+        parts: list[str] = []
 
-    return ChatResponse(session_id=req.session_id, bot_name=bot_name, reply=reply)
+        try:
+            async for token in ollama.stream_chat(history):
+                parts.append(token)
+                yield f"data: {json.dumps({'type': 'token', 'content': token})}\n\n"
+        except Exception as e:
+            yield f"data: {json.dumps({'type': 'error', 'detail': str(e)})}\n\n"
+            return
+
+        full_reply = "".join(parts)
+        await memory.append(
+            req.session_id,
+            ChatMessage(role="assistant", content=full_reply),
+            persona_id=persona_id,
+        )
+
+        if is_first_exchange:
+            asyncio.create_task(_generate_title(req.session_id, req.user_message, full_reply))
+        asyncio.create_task(_extract_facts(req.user_message, full_reply))
+
+        yield f"data: {json.dumps({'type': 'done', 'session_id': req.session_id, 'bot_name': bot_name})}\n\n"
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/reset/{session_id}")

@@ -113,17 +113,24 @@ async function handleSend(text) {
   if (!selectedPersona.value) return
 
   messages.value.push({ role: 'user', content: text })
+  messages.value.push({ role: 'assistant', content: '', streaming: true })
   loading.value = true
   error.value = ''
 
   try {
-    const data = await sendMessage(sessionId.value, text, selectedPersona.value)
-    botName.value = data.bot_name || botName.value
-    messages.value.push({ role: 'assistant', content: data.reply })
+    await sendMessage(sessionId.value, text, selectedPersona.value, {
+      onToken(token) {
+        messages.value[messages.value.length - 1].content += token
+      },
+      onDone(data) {
+        messages.value[messages.value.length - 1].streaming = false
+        if (data.bot_name) botName.value = data.bot_name
+      },
+    })
     await loadSessions()
   } catch (err) {
+    messages.value.splice(-2)
     error.value = errorMessage(err)
-    messages.value.pop()
   } finally {
     loading.value = false
   }

@@ -1,4 +1,8 @@
+import json
+from typing import AsyncGenerator
+
 import httpx
+
 from .models import ChatMessage
 
 
@@ -19,5 +23,24 @@ class OllamaClient:
             r.raise_for_status()
             data = r.json()
 
-        msg = data.get("message", {})
-        return msg.get("content", "").strip()
+        return data.get("message", {}).get("content", "").strip()
+
+    async def stream_chat(self, messages: list[ChatMessage]) -> AsyncGenerator[str, None]:
+        url = f"{self.base_url}/api/chat"
+        payload = {
+            "model": self.model,
+            "messages": [m.model_dump() for m in messages],
+            "stream": True,
+        }
+        async with httpx.AsyncClient(timeout=httpx.Timeout(120.0, connect=10.0)) as client:
+            async with client.stream("POST", url, json=payload) as r:
+                r.raise_for_status()
+                async for line in r.aiter_lines():
+                    if not line:
+                        continue
+                    data = json.loads(line)
+                    if data.get("done"):
+                        break
+                    content = data.get("message", {}).get("content", "")
+                    if content:
+                        yield content
