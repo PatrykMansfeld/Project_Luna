@@ -1,16 +1,19 @@
 import json
 from pathlib import Path
 
+
 def load_persona(persona_path: str) -> dict:
-    """Wczytuje konfigurację osobowości z pliku JSON."""
     p = Path(persona_path)
     if not p.exists():
-        raise FileNotFoundError(f"Nie znaleziono personality.json pod: {p.resolve()}")
-    data = json.loads(p.read_text(encoding="utf-8"))
-    return data
+        raise FileNotFoundError(f"Persona not found: {p.resolve()}")
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def _fmt_list(items: list, fallback: str = "- not specified") -> str:
+    return "\n".join(f"- {i}" for i in items) if items else fallback
+
 
 def build_system_prompt(persona: dict) -> str:
-    """Buduje prompt systemowy na podstawie pól osobowości."""
     name = persona.get("name", "Bot")
     backstory = persona.get("backstory", "")
     worldview = persona.get("worldview", "")
@@ -27,41 +30,33 @@ def build_system_prompt(persona: dict) -> str:
     safety = persona.get("safety", {})
     refuse_topics = safety.get("refuse_topics", [])
 
-    interests_txt = "\n".join([f"- {i}" for i in interests]) if interests else "- various topics"
-    likes_txt = "\n".join([f"- {l}" for l in likes]) if likes else "- not specified"
-    dislikes_txt = "\n".join([f"- {d}" for d in dislikes]) if dislikes else "- not specified"
-    rules_txt = "\n".join([f"- {r}" for r in rules]) if rules else "- Be natural"
-    speech_txt = "\n".join([f"- {p}" for p in speech_patterns]) if speech_patterns else ""
-    quirks_txt = "\n".join([f"- {q}" for q in quirks]) if quirks else ""
-    emotional_txt = "\n".join(
-        [f"- When user seems {mood}: {response}" for mood, response in emotional_range.items()]
-    ) if emotional_range else ""
-    refuse_topics_txt = ", ".join(refuse_topics) if refuse_topics else "none"
-
     sections = [f"You are {name}.\n"]
-
     sections.append(f"## Background\n{backstory}")
 
     if worldview:
         sections.append(f"## Worldview\n{worldview}")
 
-    sections.append(f"## Interests\n{interests_txt}")
+    sections.append(f"## Interests\n{_fmt_list(interests, '- various topics')}")
+    sections.append(f"## Preferences\nLikes:\n{_fmt_list(likes)}\n\nDislikes:\n{_fmt_list(dislikes)}")
+    sections.append(f"## Conversation style\nTone: {tone}\n\nRules:\n{_fmt_list(rules, '- Be natural')}")
 
-    sections.append(f"## Preferences\nLikes:\n{likes_txt}\n\nDislikes:\n{dislikes_txt}")
-
-    sections.append(f"## Conversation style\nTone: {tone}\n\nRules:\n{rules_txt}")
-
+    speech_txt = _fmt_list(speech_patterns, "")
     if speech_txt:
         sections.append(f"## Speech patterns\n{speech_txt}")
 
+    quirks_txt = _fmt_list(quirks, "")
     if quirks_txt:
         sections.append(f"## Behavioral quirks\n{quirks_txt}")
 
-    if emotional_txt:
+    if emotional_range:
+        emotional_txt = "\n".join(
+            f"- When user seems {mood}: {response}" for mood, response in emotional_range.items()
+        )
         sections.append(f"## How to respond to the user's emotional state\n{emotional_txt}")
 
+    refuse_txt = ", ".join(refuse_topics) if refuse_topics else "none"
     sections.append(
-        f"## Safety\nRefuse topics: {refuse_topics_txt}\n\n"
+        f"## Safety\nRefuse topics: {refuse_txt}\n\n"
         "## Important constraints\n"
         "- Do not pretend you have a physical body, a private life, or that you perceive the real world directly.\n"
         "- If you don't know something, say so clearly and suggest how the user might check it.\n"

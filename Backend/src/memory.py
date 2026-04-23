@@ -1,46 +1,90 @@
-from typing import Dict, List
+from sqlalchemy import select, delete, func
+
+from .database import SessionLocal
+from .db_models import Session as DbSession, Message as DbMessage
 from .models import ChatMessage
 
+
 class MemoryStore:
-    def __init__(self, max_turns: int = 18):
-        """Inicjalizuje magazyn w pamięci i limit historii."""
+    def __init__(self, max_turns: int = 18) -> None:
         self.max_turns = max_turns
-        self._sessions: Dict[str, List[ChatMessage]] = {}
 
-    def get(self, session_id: str) -> List[ChatMessage]:
-        """Zwraca historię wiadomości dla sesji (lub pustą listę)."""
-        return self._sessions.get(session_id, [])
+    async def get(self, session_id: str) -> list[ChatMessage]:
+        async with SessionLocal() as db:
+            result = await db.execute(
+                select(DbMessage)
+                .where(DbMessage.session_id == session_id)
+                .order_by(DbMessage.id)
+            )
+            return [ChatMessage(role=r.role, content=r.content) for r in result.scalars()]
 
-    def append(self, session_id: str, message: ChatMessage) -> None:
-        """Dodaje wiadomość do sesji i pilnuje limitu historii."""
-        if session_id not in self._sessions:
-            self._sessions[session_id] = []
-        self._sessions[session_id].append(message)
-        self._trim(session_id)
+    async def get_persona(self, session_id: str) -> str | None:
+        async with SessionLocal() as db:
+            session = await db.get(DbSession, session_id)
+            return session.persona_id if session else None
 
-    def set_system(self, session_id: str, system_message: ChatMessage) -> None:
-        """Ustawia lub podmienia wiadomość systemową na początku sesji."""
-        history = self._sessions.get(session_id, [])
-        history = [m for m in history if m.role != "system"]
-        self._sessions[session_id] = [system_message] + history
-        self._trim(session_id)
+    async def list_sessions(self, limit: int = 30) -> list[dict]:
+        async with SessionLocal() as db:
+            result = await db.execute(
+                select(DbSession).order_by(DbSession.updated_at.desc()).limit(limit)
+            )
+            sessions = result.scalars().all()
+            out = []
+            for s in sessions:
+                count = await db.scalar(
+                    select(func.count(DbMessage.id)).where(
+                        DbMessage.session_id == s.id,
+                        DbMessage.role != "system",
+                    )
+                )
+                out.append({
+                    "id": s.id,
+                    "persona_id": s.persona_id,
+                    "message_count": count or 0,
+                    "updated_at": s.updated_at.isoformat(),
+                })
+            return out
 
-    def _trim(self, session_id: str) -> None:
-        """Zostawia tylko najnowsze tury bez wiadomości systemowych."""
-        history = self._sessions.get(session_id, [])
-        if not history:
-            return
+    async def append(self, session_id: str, message: ChatMessage, persona_id: str = "unknown") -> None:
+        async with SessionLocal() as db:
+            existing = await db.get(DbSession, session_id)
+            if existing is None:
+                db.add(DbSession(id=session_id, persona_id=persona_id))
+            db.add(DbMessage(session_id=session_id, role=message.role, content=message.content))
+            await db.commit()
+            await self._trim(session_id)
 
-        system = [m for m in history if m.role == "system"]
-        rest = [m for m in history if m.role != "system"]
+    async def set_system(self, session_id: str, system_message: ChatMessage, persona_id: str = "unknown") -> None:
+        async with SessionLocal() as db:
+            existing = await db.get(DbSession, session_id)
+            if existing is None:
+                db.add(DbSession(id=session_id, persona_id=persona_id))
+            else:
+                existing.persona_id = persona_id
+            await db.execute(
+                delete(DbMessage).where(
+                    DbMessage.session_id == session_id,
+                    DbMessage.role == "system",
+                )
+            )
+            db.add(DbMessage(session_id=session_id, role="system", content=system_message.content))
+            await db.commit()
 
-        # max_turns dotyczy całej historii bez system, liczymy wiadomości user+assistant
-        if len(rest) > self.max_turns:
-            rest = rest[-self.max_turns:]
+    async def _trim(self, session_id: str) -> None:
+        async with SessionLocal() as db:
+            result = await db.execute(
+                select(DbMessage.id)
+                .where(DbMessage.session_id == session_id, DbMessage.role != "system")
+                .order_by(DbMessage.id.desc())
+                .offset(self.max_turns)
+            )
+            old_ids = [row[0] for row in result.all()]
+            if old_ids:
+                await db.execute(delete(DbMessage).where(DbMessage.id.in_(old_ids)))
+                await db.commit()
 
-        self._sessions[session_id] = (system[:1] + rest) if system else rest
-
-    def reset(self, session_id: str) -> None:
-        """Usuwa całą historię dla danej sesji."""
-        if session_id in self._sessions:
-            del self._sessions[session_id]
+    async def reset(self, session_id: str) -> None:
+        async with SessionLocal() as db:
+            await db.execute(delete(DbMessage).where(DbMessage.session_id == session_id))
+            await db.execute(delete(DbSession).where(DbSession.id == session_id))
+            await db.commit()

@@ -26,14 +26,10 @@
   --surface: #1a1a1a;
   --surface-2: #222222;
   --border: #e8e3d8;
-  --accent: #ffd60a;
   --accent-2: #4d8fff;
   --shadow-sm: 2px 2px 0px rgba(232, 227, 216, 0.35);
   --shadow: 4px 4px 0px rgba(232, 227, 216, 0.35);
   --shadow-lg: 6px 6px 0px rgba(232, 227, 216, 0.35);
-  --header-bg: #ffd60a;
-  --header-text: #000000;
-  --header-text-soft: rgba(0, 0, 0, 0.5);
 }
 
 html {

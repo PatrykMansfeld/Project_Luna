@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: luna
+      POSTGRES_USER: luna
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-luna_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U luna"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./Backend
+    restart: unless-stopped
+    environment:
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-gemma3:12b}
+      MAX_TURNS_MEMORY: ${MAX_TURNS_MEMORY:-18}
+      DATABASE_URL: postgresql+asyncpg://luna:${POSTGRES_PASSWORD:-luna_dev}@postgres:5432/luna
+      CORS_ORIGINS: http://localhost
+    depends_on:
+      postgres:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: ./API
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:8000
+      API_ADDR: :3000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  frontend:
+    build: ./Frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

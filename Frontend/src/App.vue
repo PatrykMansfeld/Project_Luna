@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
-import { fetchPersonas, resetSession, sendMessage } from './api.js'
+import { fetchPersonas, fetchSessions, fetchSessionMessages, resetSession, sendMessage } from './api.js'
 import ChatInput from './components/ChatInput.vue'
 import ChatWindow from './components/ChatWindow.vue'
 import PersonaSelector from './components/PersonaSelector.vue'
+import SessionHistory from './components/SessionHistory.vue'
 
 const THEME_KEY = 'theme'
+const SESSION_KEY = 'sessionId'
 const DEFAULT_BOT_NAME = 'Bot'
 
 const personas = ref([])
@@ -15,20 +17,30 @@ const loading = ref(false)
 const botName = ref(DEFAULT_BOT_NAME)
 const error = ref('')
 const dark = ref(getInitialTheme())
-const sessionId = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+const sessions = ref([])
+const sessionId = ref(getOrCreateSessionId())
+
 const activePersona = computed(
   () => personas.value.find((persona) => persona.id === selectedPersona.value) ?? null,
 )
 
 setTheme(dark.value)
-onMounted(loadPersonas)
+onMounted(async () => {
+  await loadPersonas()
+  await loadSessions()
+})
+
+function getOrCreateSessionId() {
+  const stored = localStorage.getItem(SESSION_KEY)
+  if (stored) return stored
+  const id = `s-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+  localStorage.setItem(SESSION_KEY, id)
+  return id
+}
 
 function getInitialTheme() {
-  const savedTheme = localStorage.getItem(THEME_KEY)
-  if (savedTheme) {
-    return savedTheme === 'dark'
-  }
-
+  const saved = localStorage.getItem(THEME_KEY)
+  if (saved) return saved === 'dark'
   return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
@@ -47,47 +59,71 @@ function syncSelectedPersona(id) {
   botName.value = personas.value.find((persona) => persona.id === id)?.name ?? DEFAULT_BOT_NAME
 }
 
+function errorMessage(err) {
+  if (err.type === 'network') return 'Brak połączenia z serwerem.'
+  if (err.type === 'server') return 'Błąd serwera — sprawdź czy Ollama działa.'
+  return 'Coś poszło nie tak. Spróbuj ponownie.'
+}
+
 async function loadPersonas() {
   try {
     personas.value = await fetchPersonas()
-    if (personas.value[0]) {
-      syncSelectedPersona(personas.value[0].id)
-    }
+    const storedPersona = sessions.value.find((s) => s.id === sessionId.value)?.persona_id
+    const firstPersona = personas.value[0]?.id
+    syncSelectedPersona(storedPersona ?? firstPersona ?? null)
+  } catch (err) {
+    error.value = errorMessage(err)
+  }
+}
+
+async function loadSessions() {
+  try {
+    sessions.value = await fetchSessions()
   } catch {
-    error.value = 'Nie udało się połączyć z serwerem.'
+    // session history is non-critical — silently ignore
   }
 }
 
 async function selectPersona(id) {
-  if (id === selectedPersona.value) {
-    return
-  }
+  if (id === selectedPersona.value) return
 
   syncSelectedPersona(id)
   messages.value = []
 
   try {
-    await resetSession(sessionId)
+    await resetSession(sessionId.value)
   } catch {
     // Ignore session reset failures and let the next message recreate context.
   }
 }
 
-async function handleSend(text) {
-  if (!selectedPersona.value) {
-    return
+async function restoreSession(session) {
+  try {
+    const data = await fetchSessionMessages(session.id)
+    sessionId.value = session.id
+    localStorage.setItem(SESSION_KEY, session.id)
+    messages.value = data.messages
+    syncSelectedPersona(session.persona_id)
+  } catch (err) {
+    error.value = errorMessage(err)
   }
+}
+
+async function handleSend(text) {
+  if (!selectedPersona.value) return
 
   messages.value.push({ role: 'user', content: text })
   loading.value = true
   error.value = ''
 
   try {
-    const data = await sendMessage(sessionId, text, selectedPersona.value)
+    const data = await sendMessage(sessionId.value, text, selectedPersona.value)
     botName.value = data.bot_name || botName.value
     messages.value.push({ role: 'assistant', content: data.reply })
-  } catch {
-    error.value = 'Błąd — sprawdź czy backend i Ollama działają.'
+    await loadSessions()
+  } catch (err) {
+    error.value = errorMessage(err)
+    messages.value.pop()
   } finally {
     loading.value = false
   }
@@ -141,6 +177,13 @@ async function handleSend(text) {
         @select="selectPersona"
       />
     </section>
+
+    <SessionHistory
+      :sessions="sessions"
+      :active-session-id="sessionId"
+      :personas="personas"
+      @load="restoreSession"
+    />
 
     <ChatWindow
       :messages="messages"
